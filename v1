@@ -113,24 +113,6 @@
         button.btn-magic.active { background: #6b21a8; border-color: #9333ea; }
         button.btn-delete:hover { background: #451a1a; color: #ff6666; border-color: #662222; }
 
-        /* Color Palette */
-        .color-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
-
-        .color-swatch {
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .color-swatch:hover { transform: scale(1.1); }
-        .color-swatch.active { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 10px rgba(255,255,255,0.3); }
-
         /* Sliders */
         input[type="range"] {
             width: 100%;
@@ -200,14 +182,6 @@
                 </div>
             </div>
 
-            <!-- Colors -->
-            <div>
-                <div class="section-title">Chalk Color</div>
-                <div class="color-grid" id="color-palette">
-                    <!-- Colors injected by JS -->
-                </div>
-            </div>
-
             <!-- Size -->
             <div>
                 <div class="section-title">Size <span id="size-display">6px</span></div>
@@ -246,8 +220,7 @@
 
         // --- Configuration ---
         const CONFIG = {
-            bgColor: '#000000',
-            colors: ['#FFFFFF', '#FF3333', '#33FF57', '#3357FF', '#FFFF33', '#FF33FF', '#33FFFF', '#FFA500']
+            bgColor: '#000000'
         };
 
         // --- State ---
@@ -265,7 +238,6 @@
         // --- DOM Elements ---
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d', { alpha: false }); // Optimize for no transparency on bg
-        const uiColorPalette = document.getElementById('color-palette');
         const sizeSlider = document.getElementById('size-slider');
         const sizeDisplay = document.getElementById('size-display');
         const fileInput = document.getElementById('file-input');
@@ -275,7 +247,6 @@
         function init() {
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
-            setupPalette();
             setupTools();
             setupActions();
             setupPointerEvents();
@@ -286,23 +257,6 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             render(); // Force re-render immediately
-        }
-
-        function setupPalette() {
-            uiColorPalette.innerHTML = '';
-            CONFIG.colors.forEach(color => {
-                const div = document.createElement('div');
-                div.className = 'color-swatch';
-                div.style.backgroundColor = color;
-                if (color === state.currentColor) div.classList.add('active');
-                
-                div.onclick = () => {
-                    state.currentColor = color;
-                    if (state.currentTool === 'eraser') setTool('chalk');
-                    updateUI();
-                };
-                uiColorPalette.appendChild(div);
-            });
         }
 
         function setupTools() {
@@ -339,27 +293,8 @@
                 if (state.currentTool === t) btn.classList.add('active');
                 else btn.classList.remove('active');
             });
-
-            // Update color selection visuals
-            Array.from(document.getElementsByClassName('color-swatch')).forEach(el => {
-                // rgb to hex comparison is tricky, so we rely on index or re-render
-                // Simple re-render of classes based on state
-                if (rgbToHex(el.style.backgroundColor).toUpperCase() === state.currentColor.toUpperCase()) {
-                    el.classList.add('active');
-                } else {
-                    el.classList.remove('active');
-                }
-            });
         }
         
-        // Helper for color comparison
-        function rgbToHex(rgb) {
-            if (rgb.startsWith('#')) return rgb;
-            const rgbValues = rgb.match(/\d+/g);
-            if (!rgbValues) return rgb;
-            return "#" + ((1 << 24) + (parseInt(rgbValues[0]) << 16) + (parseInt(rgbValues[1]) << 8) + parseInt(rgbValues[2])).toString(16).slice(1);
-        }
-
         // --- Geometry Engine (The "Magic" Part) ---
 
         const distance = (p1, p2) => Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
